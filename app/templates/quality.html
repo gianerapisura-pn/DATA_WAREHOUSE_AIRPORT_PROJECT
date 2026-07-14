@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Quality Control · Airport Data Operations{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="section-code">QA-01 · Pipeline audit</p>
+
+    <h1>Data quality control</h1>
+
+    <p>
+      Review each ingestion batch, its source file, pipeline status,
+      loaded rows, repaired values, and rejected records.
+    </p>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="section-code">Batch register</p>
+      <h2>Ingestion batches</h2>
+    </div>
+
+    <p>Latest pipeline runs appear first.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Batch</th>
+          <th>Dataset</th>
+          <th>File</th>
+          <th>Status</th>
+          <th>Received</th>
+          <th>Loaded</th>
+          <th>Rejected</th>
+          <th>Repaired</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for batch in batches %}
+        <tr>
+          <td>#{{ batch.batch_id }}</td>
+          <td>{{ batch.dataset_name }}</td>
+          <td>{{ batch.source_filename }}</td>
+
+          <td>
+            <span class="status-badge {{ batch.status|lower }}">
+              {{ batch.status }}
+            </span>
+          </td>
+
+          <td>{{ batch.rows_received }}</td>
+          <td>{{ batch.rows_loaded }}</td>
+          <td>{{ batch.rows_rejected }}</td>
+          <td>{{ batch.rows_repaired }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">No ingestion batches found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="section-code">Exception register</p>
+      <h2>Rejected records</h2>
+    </div>
+
+    <p>
+      Rejected values remain outside the warehouse facts and dimensions.
+    </p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Batch</th>
+          <th>Dataset</th>
+          <th>Source row</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for row in rejections %}
+        <tr>
+          <td>#{{ row.batch_id }}</td>
+          <td>{{ row.dataset_name }}</td>
+          <td>{{ row.source_row }}</td>
+          <td>{{ row.reason }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4">No rejected records.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Data Ingestion · Airport Data Operations{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="section-code">ETL-01 · Source ingestion</p>
+
+    <h1>Upload and process airport data</h1>
+
+    <p>
+      The selected source file moves through staging, validation,
+      transformation, warehouse loading, and data-mart refresh.
+    </p>
+  </div>
+</section>
+
+<div class="upload-console">
+  <section class="upload-zone">
+    <h2>New ingestion batch</h2>
+
+    <p>
+      Select the source type that matches the file before starting the pipeline.
+    </p>
+
+    <form id="upload-form" class="stacked-form">
+      <label>
+        Dataset type
+
+        <select name="dataset_name" required>
+          <option value="airlines">Airlines</option>
+          <option value="airports">Airports</option>
+          <option value="passengers">Passengers</option>
+          <option value="passenger_updates">Passenger updates (SCD)</option>
+          <option value="flights">Flights</option>
+          <option value="corporate_sales">Corporate sales</option>
+          <option value="travel_agency_sales">Travel agency sales</option>
+          <option value="flight_status_events">Flight status events</option>
+        </select>
+      </label>
+
+      <label>
+        CSV or text source file
+
+        <input
+          type="file"
+          name="file"
+          accept=".csv,.txt"
+          required
+        >
+      </label>
+
+      <button type="submit">Start processing</button>
+    </form>
+  </section>
+
+  <aside class="process-map">
+    <h3>Processing sequence</h3>
+
+    <div class="process-list">
+      <div class="process-item">
+        <span class="process-number">1</span>
+        <span>
+          Receive the source file and create an ingestion batch.
+        </span>
+      </div>
+
+      <div class="process-item">
+        <span class="process-number">2</span>
+        <span>
+          Validate columns, data types, business keys, and references.
+        </span>
+      </div>
+
+      <div class="process-item">
+        <span class="process-number">3</span>
+        <span>
+          Clean, standardize, repair, or reject invalid records.
+        </span>
+      </div>
+
+      <div class="process-item">
+        <span class="process-number">4</span>
+        <span>
+          Load dimensions and facts, then refresh the data marts.
+        </span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="section-code">Run log</p>
+      <h2>Processing response</h2>
+    </div>
+
+    <p>
+      The response shows received, repaired, loaded, and rejected counts.
+    </p>
+  </div>
+
+  <div class="panel-body">
+    <pre id="upload-result" class="result-terminal">Waiting for a source file...</pre>
+  </div>
+</section>
+
+<script>
+const form = document.getElementById("upload-form");
+const result = document.getElementById("upload-result");
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  result.textContent = "Processing ingestion batch...";
+
+  try {
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: new FormData(form)
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.detail || "The file could not be processed.");
+    }
+
+    result.textContent = JSON.stringify(payload, null, 2);
+  } catch (error) {
+    result.textContent = error.message;
+  }
+});
+</script>
+{% endblock %}

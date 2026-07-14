@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Passenger History · Airport Data Operations{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="section-code">SCD-02 · Historical dimension tracking</p>
+
+    <h1>Passenger record history</h1>
+
+    <p>
+      Slowly Changing Dimension Type 2 keeps the previous passenger
+      version when tracked attributes change and identifies the current record.
+    </p>
+  </div>
+</section>
+
+<form class="search-console" method="get" action="/history">
+  <input
+    name="passenger_id"
+    value="{{ passenger_id }}"
+    placeholder="Enter passenger ID, such as P1001"
+    aria-label="Passenger ID"
+  >
+
+  <button type="submit">Load history</button>
+</form>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="section-code">Dimension versions</p>
+      <h2>Passenger {{ passenger_id }}</h2>
+    </div>
+
+    <p>Each row represents one valid historical version.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table class="timeline-table">
+      <thead>
+        <tr>
+          <th>Version key</th>
+          <th>Passenger ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Loyalty</th>
+          <th>Effective from</th>
+          <th>Effective to</th>
+          <th>Record state</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for row in history %}
+        <tr>
+          <td>{{ row.passenger_sk }}</td>
+          <td>{{ row.passenger_id }}</td>
+          <td>{{ row.full_name }}</td>
+          <td>{{ row.email }}</td>
+          <td>{{ row.loyalty_status }}</td>
+          <td>{{ row.effective_from }}</td>
+          <td>{{ row.effective_to or 'Open' }}</td>
+
+          <td>
+            {% if row.is_current %}
+            <span class="current-marker">Current</span>
+            {% else %}
+            Historical
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8">No passenger history found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

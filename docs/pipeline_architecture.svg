@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Airport data warehouse pipeline</title>
+  <desc id="desc">Raw CSV files flow through staging, validation, dimensions and facts, data marts, Kafka events, and the web application.</desc>
+  <rect width="1600" height="900" rx="32" fill="#17354f"/>
+  <text x="100" y="110" fill="#c49a53" font-family="Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="5">AIRPORT DATA WAREHOUSE</text>
+  <text x="100" y="165" fill="#ffffff" font-family="Georgia, serif" font-size="48">ETL, dimensional modeling, and ticket data mart</text>
+  <g font-family="Arial, sans-serif" font-size="24" fill="#ffffff" text-anchor="middle">
+    <rect x="100" y="300" width="220" height="140" rx="18" fill="#244761" stroke="#7892a4"/>
+    <text x="210" y="360">Raw CSV</text><text x="210" y="395" font-size="18" fill="#d9e4e8">6 source datasets</text>
+    <rect x="390" y="300" width="220" height="140" rx="18" fill="#244761" stroke="#7892a4"/>
+    <text x="500" y="350">Staging</text><text x="500" y="385" font-size="18" fill="#d9e4e8">Raw values + batch log</text>
+    <rect x="680" y="300" width="220" height="140" rx="18" fill="#397f7b" stroke="#8cc0bc"/>
+    <text x="790" y="350">Clean &amp; Validate</text><text x="790" y="385" font-size="18" fill="#e1f0ee">Repairs + rejections</text>
+    <rect x="970" y="250" width="250" height="110" rx="18" fill="#244761" stroke="#7892a4"/>
+    <text x="1095" y="305">Dimensions</text><text x="1095" y="335" font-size="18" fill="#d9e4e8">Date · Passenger · Flight</text>
+    <rect x="970" y="390" width="250" height="110" rx="18" fill="#244761" stroke="#7892a4"/>
+    <text x="1095" y="445">Facts</text><text x="1095" y="475" font-size="18" fill="#d9e4e8">Corporate · Agency</text>
+    <rect x="1290" y="300" width="220" height="140" rx="18" fill="#c49a53" stroke="#f2dba9"/>
+    <text x="1400" y="350" fill="#17354f">Data Marts</text><text x="1400" y="385" font-size="18" fill="#17354f">Ticket + sales hierarchy</text>
+  </g>
+  <g stroke="#c49a53" stroke-width="6" fill="none" marker-end="url(#arrow)">
+    <path d="M320 370 H390"/><path d="M610 370 H680"/><path d="M900 370 H950"/><path d="M1220 305 H1290"/><path d="M1220 445 H1290"/>
+  </g>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto"><path d="M0,0 L0,8 L10,4 z" fill="#c49a53"/></marker></defs>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <rect x="350" y="620" width="300" height="130" rx="18" fill="#244761" stroke="#7892a4"/>
+    <text x="500" y="675" fill="#ffffff" font-size="26">Kafka status events</text><text x="500" y="710" fill="#d9e4e8" font-size="18">Producer → topic → consumer</text>
+    <rect x="950" y="620" width="300" height="130" rx="18" fill="#397f7b" stroke="#8cc0bc"/>
+    <text x="1100" y="675" fill="#ffffff" font-size="26">FastAPI website</text><text x="1100" y="710" fill="#e1f0ee" font-size="18">Upload · Lookup · Quality · SCD</text>
+  </g>
+  <path d="M650 685 H920" stroke="#c49a53" stroke-width="6" marker-end="url(#arrow)"/>
+  <path d="M1400 440 V560 H1100 V620" stroke="#c49a53" stroke-width="6" fill="none" marker-end="url(#arrow)"/>
+</svg>

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Control Center · Airport Data Operations{% endblock %}
+
+{% block content %}
+<section class="ops-hero">
+  <div class="hero-copy">
+    <p class="kicker">Airport warehouse operations</p>
+
+    <h1>Flight data prepared for check-in, monitoring, and analysis.</h1>
+
+    <p>
+      Raw airline, airport, passenger, flight, and sales records move through
+      validation, dimensional modeling, and ticket-level data marts.
+    </p>
+
+    <div class="hero-actions">
+      <a class="primary-action" href="/lookup">Open check-in lookup</a>
+      <a class="secondary-action" href="/upload">Process a source file</a>
+    </div>
+  </div>
+
+  <div class="hero-operations" aria-hidden="true">
+    <div class="route-monitor">
+      <div class="monitor-header">
+        <span>Pipeline monitor</span>
+        <span class="live-chip">Active</span>
+      </div>
+
+      <div class="monitor-route">
+        <strong class="airport-code">RAW</strong>
+        <span class="flight-path"></span>
+        <strong class="airport-code">MART</strong>
+      </div>
+
+      <div class="pipeline-strip">
+        <span class="pipeline-step active">Ingest</span>
+        <span class="pipeline-step active">Validate</span>
+        <span class="pipeline-step active">Model</span>
+        <span class="pipeline-step active">Serve</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="metric-grid" aria-label="Warehouse metrics">
+  <article class="metric-card">
+    <span class="metric-label">
+      Loaded tickets
+      <span>01</span>
+    </span>
+    <strong>{{ metrics.total_tickets }}</strong>
+  </article>
+
+  <article class="metric-card">
+    <span class="metric-label">
+      Total sales
+      <span>02</span>
+    </span>
+    <strong>{{ metrics.total_sales|money }}</strong>
+  </article>
+
+  <article class="metric-card warning">
+    <span class="metric-label">
+      Delayed
+      <span>03</span>
+    </span>
+    <strong>{{ metrics.delayed }}</strong>
+  </article>
+
+  <article class="metric-card danger">
+    <span class="metric-label">
+      Cancelled
+      <span>04</span>
+    </span>
+    <strong>{{ metrics.cancelled }}</strong>
+  </article>
+
+  <article class="metric-card success">
+    <span class="metric-label">
+      Eligible records
+      <span>05</span>
+    </span>
+    <strong>{{ metrics.eligible }}</strong>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="section-code">OLAP-01 · Time hierarchy</p>
+      <h2>Monthly sales movement</h2>
+    </div>
+
+    <p>Day → Month → Quarter → Half-year → Year</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Source</th>
+          <th>Transactions</th>
+          <th>Total sales</th>
+          <th>Average ticket</th>
+          <th>Delayed</th>
+          <th>Cancelled</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for row in summaries %}
+        <tr>
+          <td>
+            {{ row.month_name }} {{ row.year }}
+            · Q{{ row.quarter }}
+            · H{{ row.half_year }}
+          </td>
+
+          <td>
+            <span class="data-chip">{{ row.source_type }}</span>
+          </td>
+
+          <td>{{ row.transaction_count }}</td>
+          <td>{{ row.total_sales|money }}</td>
+          <td>{{ row.average_ticket_value|money }}</td>
+          <td>{{ row.delayed_count }}</td>
+          <td>{{ row.cancelled_count }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">
+            Run the bootstrap script to load the project data.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="section-code">ETL-02 · Batch monitoring</p>
+      <h2>Recent ingestion activity</h2>
+    </div>
+
+    <a href="/quality">Open quality control →</a>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Batch</th>
+          <th>Dataset</th>
+          <th>Status</th>
+          <th>Received</th>
+          <th>Loaded</th>
+          <th>Rejected</th>
+          <th>Repaired</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for batch in recent_batches %}
+        <tr>
+          <td>#{{ batch.batch_id }}</td>
+          <td>{{ batch.dataset_name }}</td>
+
+          <td>
+            <span class="status-badge {{ batch.status|lower }}">
+              {{ batch.status }}
+            </span>
+          </td>
+
+          <td>{{ batch.rows_received }}</td>
+          <td>{{ batch.rows_loaded }}</td>
+          <td>{{ batch.rows_rejected }}</td>
+          <td>{{ batch.rows_repaired }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">No pipeline runs yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

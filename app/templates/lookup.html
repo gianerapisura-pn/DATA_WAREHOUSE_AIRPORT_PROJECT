@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Check-in Lookup · Airport Data Operations{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="section-code">MART-01 · Check-in attendant view</p>
+
+    <h1>Passenger and flight lookup</h1>
+
+    <p>
+      Search a consolidated ticket record by passenger ID, passenger name,
+      flight number, airport code, airline, or transaction ID. The demo
+      disruption rule uses cancellation or a delay of at least
+      {{ delay_threshold }} minutes.
+    </p>
+  </div>
+</section>
+
+<form class="search-console" method="get" action="/lookup">
+  <input
+    name="q"
+    value="{{ query }}"
+    placeholder="Search P1001, AA100, Mary Smith, JFK, or 10001"
+    aria-label="Search passenger or flight record"
+  >
+
+  <button type="submit">Run lookup</button>
+</form>
+
+<div class="ticket-list">
+  {% for ticket in tickets %}
+  <article class="flight-ticket">
+    <div class="ticket-body">
+      <div class="ticket-header">
+        <div class="airline-lockup">
+          <span>Operating airline</span>
+          <strong>{{ ticket.airline_name }}</strong>
+        </div>
+
+        <div class="ticket-flight">
+          <span>Flight</span>
+          <strong>{{ ticket.flight_key }}</strong>
+        </div>
+      </div>
+
+      <div class="ticket-route">
+        <div class="route-airport">
+          <span>Origin</span>
+          <strong>{{ ticket.origin_airport_code }}</strong>
+          <small>{{ ticket.origin_city }}</small>
+        </div>
+
+        <div class="route-track">
+          <span class="route-plane" aria-hidden="true">✈</span>
+        </div>
+
+        <div class="route-airport">
+          <span>Destination</span>
+          <strong>{{ ticket.destination_airport_code }}</strong>
+          <small>{{ ticket.destination_city }}</small>
+        </div>
+      </div>
+
+      <div class="ticket-fields">
+        <div class="ticket-field">
+          <span>Passenger</span>
+          <strong>{{ ticket.passenger_name }}</strong>
+          <small>{{ ticket.passenger_id }}</small>
+        </div>
+
+        <div class="ticket-field">
+          <span>Travel date</span>
+          <strong>{{ ticket.transaction_date }}</strong>
+          <small>{{ ticket.source_type }}</small>
+        </div>
+
+        <div class="ticket-field">
+          <span>Aircraft</span>
+          <strong>{{ ticket.aircraft_type }}</strong>
+          <small>Transaction {{ ticket.transaction_id }}</small>
+        </div>
+
+        <div class="ticket-field">
+          <span>Total amount</span>
+          <strong>{{ ticket.total_amount|money }}</strong>
+          <small>Fare, taxes, and baggage</small>
+        </div>
+      </div>
+    </div>
+
+    <aside class="ticket-stub">
+      <div class="ticket-stub-top">
+        <span class="status-badge {{ ticket.flight_status|lower }}">
+          {{ ticket.flight_status }}
+        </span>
+
+        <div class="ticket-stub-row">
+          <span>Delay duration</span>
+          <strong>{{ ticket.delay_minutes }} minutes</strong>
+        </div>
+
+        <div class="ticket-stub-row">
+          <span>Disruption result</span>
+
+          <strong>
+            <span class="eligibility-badge {% if ticket.is_eligible %}yes{% else %}no{% endif %}">
+              {% if ticket.is_eligible %}
+                Eligible
+              {% else %}
+                Not eligible
+              {% endif %}
+            </span>
+          </strong>
+        </div>
+
+        <div class="ticket-stub-row">
+          <span>Assessment</span>
+          <strong>{{ ticket.eligibility_reason }}</strong>
+        </div>
+      </div>
+
+      <div class="barcode" aria-hidden="true"></div>
+    </aside>
+  </article>
+  {% else %}
+    {% if query %}
+    <div class="empty-state">
+      No ticket record matched the submitted search value.
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endblock %}

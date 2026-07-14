@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071b2e">
+  <title>{% block title %}Airport Data Operations{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand-lockup" href="/" aria-label="Airport Data Operations home">
+      <span class="brand-symbol" aria-hidden="true"></span>
+      <span class="brand-copy">
+        <strong>Airport Data Operations</strong>
+        <span>Warehouse Control Console</span>
+      </span>
+    </a>
+
+    <div class="system-status">
+      <span class="status-light"></span>
+      Local warehouse online
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <p class="sidebar-label">Operations menu</p>
+
+      <nav aria-label="Primary navigation">
+        <a class="nav-link {% if request.url.path == '/' %}active{% endif %}" href="/">
+          <span class="nav-icon" aria-hidden="true">▦</span>
+          Control center
+        </a>
+
+        <a class="nav-link {% if request.url.path == '/upload' %}active{% endif %}" href="/upload">
+          <span class="nav-icon" aria-hidden="true">⇧</span>
+          Data ingestion
+        </a>
+
+        <a class="nav-link {% if request.url.path == '/lookup' %}active{% endif %}" href="/lookup">
+          <span class="nav-icon" aria-hidden="true">⌕</span>
+          Check-in lookup
+        </a>
+
+        <a class="nav-link {% if request.url.path == '/quality' %}active{% endif %}" href="/quality">
+          <span class="nav-icon" aria-hidden="true">✓</span>
+          Quality control
+        </a>
+
+        <a class="nav-link {% if request.url.path == '/history' %}active{% endif %}" href="/history">
+          <span class="nav-icon" aria-hidden="true">↺</span>
+          Passenger history
+        </a>
+      </nav>
+
+      <div class="sidebar-note">
+        Batch ETL<br>
+        Dimensional warehouse<br>
+        Ticket data mart<br>
+        Flight-status events
+      </div>
+    </aside>
+
+    <div class="content-area">
+      <main class="page-shell">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="site-footer">
+        Airport data warehouse academic system · Local demo environment · PostgreSQL/Supabase-ready
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
