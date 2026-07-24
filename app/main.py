@@ -22,7 +22,7 @@ from app.models import (
     MartSalesSummary,
     RejectedRecord,
 )
-from app.services.cleaning import eligibility
+from app.services.cleaning import read_standard_csv, eligibility
 from app.services.pipeline import (
     dashboard_metrics,
     load_flight_status_events,
@@ -57,6 +57,36 @@ def money(value: Decimal | float | int) -> str:
 
 
 templates.env.filters["money"] = money
+
+MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+EXPECTED_COLUMNS = {
+    "airlines": {"AirlineKey", "AirlineName", "Alliance"},
+    "airports": {"AirportKey", "AirportName", "City", "Country"},
+    "passengers": {"PassengerKey", "FullName", "Email", "LoyaltyStatus"},
+    "passenger_updates": {"PassengerKey", "FullName", "Email", "LoyaltyStatus"},
+    "flights": {"FlightKey", "OriginAirportKey", "DestinationAirportKey", "AircraftType"},
+    "corporate_sales": {"TransactionID", "DateKey", "PassengerKey", "FlightKey", "TicketPrice", "Taxes", "BaggageFees", "TotalAmount"},
+    "travel_agency_sales": {"TransactionID", "TransactionDate", "PassengerID", "FlightID", "TicketPrice", "Taxes", "BaggageFees", "TotalAmount"},
+    "flight_status_events": {"FlightKey", "Status", "DelayMinutes", "EventTime"},
+}
+
+
+def validate_upload(dataset_name: str, filename: str, content: bytes) -> None:
+    suffix = Path(filename or "").suffix.lower()
+    if suffix not in {".csv", ".txt"}:
+        raise HTTPException(status_code=400, detail="Upload a CSV or TXT file")
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="Uploaded file is larger than 2 MB")
+    try:
+        columns, _ = read_standard_csv(content)
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=400, detail="File must use UTF-8 text encoding") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="File could not be read as CSV") from exc
+    missing = EXPECTED_COLUMNS[dataset_name] - set(columns)
+    if missing:
+        missing_list = ", ".join(sorted(missing))
+        raise HTTPException(status_code=400, detail=f"Missing required column(s): {missing_list}")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -99,10 +129,14 @@ async def upload_dataset(
     content = await file.read()
     if not content:
         raise HTTPException(status_code=400, detail="The uploaded file is empty")
+    filename = file.filename or "upload.csv"
+    validate_upload(dataset_name, filename, content)
     try:
-        return JSONResponse(process_dataset(db, dataset_name, file.filename or "upload.csv", content))
-    except Exception as exc:
+        return JSONResponse(process_dataset(db, dataset_name, filename, content))
+    except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="The file could not be processed") from exc
 
 
 @app.get("/lookup", response_class=HTMLResponse)

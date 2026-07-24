@@ -181,16 +181,19 @@ def record_rejections(db: Session, dataset_name: str, batch_id: int, result: Cle
         )
 
 
-def load_date_dimension(db: Session, start_date: date = date(2023, 1, 1), end_date: date = date(2024, 12, 31)) -> int:
-    existing = db.scalar(select(func.count()).select_from(DimDate)) or 0
-    if existing:
-        return int(existing)
+def load_date_dimension(db: Session, start_date: date = date(2023, 1, 1), end_date: date | None = None) -> int:
+    end_date = end_date or date(date.today().year + 1, 12, 31)
+    existing_dates = set(db.scalars(select(DimDate.date_key)).all())
     rows = []
     current = start_date
     while current <= end_date:
+        date_key = int(current.strftime("%Y%m%d"))
+        if date_key in existing_dates:
+            current += timedelta(days=1)
+            continue
         rows.append(
             DimDate(
-                date_key=int(current.strftime("%Y%m%d")),
+                date_key=date_key,
                 full_date=current,
                 day_of_month=current.day,
                 day_name=current.strftime("%A"),
@@ -204,8 +207,9 @@ def load_date_dimension(db: Session, start_date: date = date(2023, 1, 1), end_da
             )
         )
         current += timedelta(days=1)
-    db.add_all(rows)
-    db.flush()
+    if rows:
+        db.add_all(rows)
+        db.flush()
     return len(rows)
 
 
@@ -578,8 +582,16 @@ def process_dataset(db: Session, dataset_name: str, source_filename: str, conten
             ],
         }
     except Exception:
-        batch.completed_at = datetime.utcnow()
-        batch.status = "FAILED"
+        db.rollback()
+        failed_batch = IngestionBatch(
+            batch_id=batch.batch_id,
+            dataset_name=dataset_name,
+            source_filename=source_filename,
+            started_at=batch.started_at,
+            completed_at=datetime.utcnow(),
+            status="FAILED",
+        )
+        db.merge(failed_batch)
         db.commit()
         raise
 

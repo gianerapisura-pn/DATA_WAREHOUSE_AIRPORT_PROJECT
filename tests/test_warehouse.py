@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -6,12 +7,14 @@ from sqlalchemy import func, select
 from app.database import SessionLocal
 from app.main import app
 from app.models import (
+    DimDate,
     DimPassenger,
+    IngestionBatch,
     FactAgencySale,
     FactCorporateSale,
     MartPassengerTicket,
 )
-from app.services.pipeline import search_tickets
+from app.services.pipeline import load_date_dimension, process_dataset, search_tickets
 
 
 def test_warehouse_counts():
@@ -77,3 +80,53 @@ def test_lookup_page():
         assert response.status_code == 200
         assert "Mary Smith" in response.text
         assert "AA100" in response.text
+
+
+def test_date_dimension_extends_beyond_current_year():
+    db = SessionLocal()
+    try:
+        load_date_dimension(db)
+        max_date = db.scalar(select(func.max(DimDate.full_date)))
+        assert max_date >= date(date.today().year + 1, 12, 31)
+    finally:
+        db.rollback()
+        db.close()
+
+
+def test_upload_rejects_wrong_columns():
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/upload",
+            data={"dataset_name": "airlines"},
+            files={"file": ("bad.csv", b"Wrong,Columns\nA,B\n", "text/csv")},
+        )
+        assert response.status_code == 400
+        assert "Missing required column" in response.json()["detail"]
+
+
+def test_failed_upload_keeps_failed_batch_without_loading_rows():
+    db = SessionLocal()
+    before = db.scalar(select(func.count()).select_from(IngestionBatch)) or 0
+    db.close()
+
+    db = SessionLocal()
+    try:
+        try:
+            process_dataset(db, "airlines", "invalid.csv", b"\xff\xfe")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Expected invalid upload to fail")
+    finally:
+        db.close()
+
+    db = SessionLocal()
+    try:
+        after = db.scalar(select(func.count()).select_from(IngestionBatch)) or 0
+        latest = db.scalar(select(IngestionBatch).order_by(IngestionBatch.batch_id.desc()).limit(1))
+        assert after == before + 1
+        assert latest.status == "FAILED"
+        assert latest.dataset_name == "airlines"
+        assert latest.rows_loaded == 0
+    finally:
+        db.close()

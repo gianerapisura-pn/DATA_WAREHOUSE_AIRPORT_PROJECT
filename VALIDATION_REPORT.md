@@ -1,11 +1,10 @@
 # Validation Report
 
-Validation date: 2026-07-14
+Validation date: 2026-07-24
 
 ## Commands run
 
 ```bash
-python scripts/prepare_data.py
 python scripts/bootstrap.py --reset
 pytest -q
 python -m compileall -q app scripts kafka tests
@@ -14,17 +13,18 @@ python scripts/export_marts.py
 
 ## Results
 
-- Data preparation completed.
 - Warehouse bootstrap completed.
-- 11 tests passed.
+- 14 tests passed.
 - Python compilation completed without syntax errors.
 - Ticket and sales-summary data marts exported successfully.
+- Upload validation rejects unsupported or mismatched files before ETL loading.
+- Failed upload batches are retained with `FAILED` status for audit review.
 
 ## Verified database counts
 
 | Table/output | Count |
 |---|---:|
-| `dim_date` | 731 |
+| `dim_date` | 1,826 |
 | `dim_airline` | 39 |
 | `dim_airport` | 221 |
 | `dim_passenger` versions | 2,824 |
@@ -45,5 +45,8 @@ python scripts/export_marts.py
 - Duplicate loaded fact transaction IDs: 0
 - Current passenger rows: one per passenger business key
 - SCD history verified for P1001 and P1002
+- Date dimension verified through the end of the next calendar year from runtime
 
-Kafka broker execution and a live Supabase connection were not tested in this environment. Their code, Docker configuration, PostgreSQL schema, and setup instructions are included, while the tested local implementation uses SQLite.
+## Runtime scope
+
+The verified local implementation uses SQLite. Kafka scripts, Docker Compose configuration, PostgreSQL SQL, and Supabase setup notes are included, but this validation run did not start a Kafka broker or connect to a live Supabase project.
